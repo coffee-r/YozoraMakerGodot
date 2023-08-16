@@ -3,6 +3,9 @@ extends KinematicBody2D
 # スコア追加シグナル
 signal add_score
 
+# プレイヤー死亡シグナル
+signal player_death
+
 # 移動速度
 export var move_speed: float = 25.0
 
@@ -30,6 +33,9 @@ func _input(event):
 			
 			# 回転方向オブジェクトを停止
 			$ShootDirector.stop()
+
+func _process(delta):
+	animation()
 
 func _physics_process(delta):
 	# 移動
@@ -79,6 +85,12 @@ func _on_PlayerLife_body_entered(body):
 	hit_effect.z_index = -2
 	hit_effect.position = body.position
 	get_parent().add_child(hit_effect)
+	
+	# ヒットSE再生
+	$DeathSE.play()
+	
+	# プレイヤー死亡シグナル
+	emit_signal('player_death')
 
 func emit_add_score():
 	# 追加スコア定義
@@ -99,8 +111,37 @@ func emit_add_score():
 	# スコア追加
 	Score.value += add_score
 	
+	# 効果音
+	if is_graze:
+		$GrazeSE.play()
+	else:
+		$ShootSE.play()
+	
 	# シグナル流す
 	emit_signal("add_score", is_graze)
 
-
+func animation():
+	if is_dead:
+		$PlayerAnimatedSprite.animation = 'Death'
+		return
+	
+	var degree = rad2deg($ShootDirector.position.normalized().angle())
+	
+	var direction = 'Idle'
+	
+	if degree >= -45 && degree < 45:
+		direction = 'Right'
+	elif degree >= 45 && degree < 135:
+		direction = 'Down'
+	elif degree >= -135 && degree < -45:
+		direction = 'Up'
+	else:
+		direction = 'Left'
+	
+	if $ShootWaitTimer.is_stopped():
+		$PlayerAnimatedSprite.animation = 'Idle' + direction
+	else:
+		$PlayerAnimatedSprite.animation = 'Shoot' + direction
+		
+	
 

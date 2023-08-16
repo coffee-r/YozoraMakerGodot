@@ -16,6 +16,7 @@ func _physics_process(delta):
 	# 物体と当たったら反射
 	if collision:
 		velocity = velocity.bounce(collision.get_normal())
+		$CollisionSE.play()
 	
 	# 移動
 	position += velocity * delta
